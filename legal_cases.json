@@ -1,0 +1,18 @@
+[
+  {
+    "case_id": "001",
+    "title": "State vs Rajesh",
+    "summary": "This case deals with IPC section 302 regarding murder.",
+    "judgement": "The accused was found guilty under IPC 302.",
+    "keywords": ["murder", "IPC 302", "criminal"],
+    "full_text": "In the case of State vs Rajesh, the High Court observed that there was enough evidence to convict the accused under IPC 302..."
+  },
+  {
+    "case_id": "002",
+    "title": "ABC Corp vs Govt of India",
+    "summary": "Breach of contract involving a government tender.",
+    "judgement": "The contract was nullified due to procedural issues.",
+    "keywords": ["contract", "tender", "government"],
+    "full_text": "ABC Corp filed a petition against the government for breach of contract in a public tender. The court ruled in favor of the government citing procedural lapses by the corporation."
+  }
+]
