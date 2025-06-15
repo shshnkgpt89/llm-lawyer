@@ -3,26 +3,27 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain_community.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
 
-def answer_question(question):
-    # Load embeddings
-    embeddings = HuggingFaceEmbeddings()
+# Initialize components once (best for performance)
+embeddings = HuggingFaceEmbeddings()
+db = Chroma(persist_directory="chroma_db", embedding_function=embeddings)
 
-    # Load vector store
-    db = Chroma(persist_directory="chroma_db", embedding_function=embeddings)
+llm = Ollama(
+    model="phi3",
+    temperature=0.2,
+    num_predict=256,
+    stop=["\nUser:"],
+    streaming=False
+)
 
-    # Retrieve top 4 most relevant document chunks
+chain = load_qa_chain(llm, chain_type="stuff")
+
+def answer_question(question: str) -> str:
+    # Search for top 4 relevant chunks
     docs = db.similarity_search(question, k=4)
 
     if not docs:
-        return "❌ I couldn’t find anything relevant to your question in the uploaded documents."
+        return "❌ Sorry, I couldn't find anything relevant in the Dutch Co Agreement."
 
-    # Load Gemma model
-    llm = Ollama(model="phi3")
-
-    # Format prompt for Gemma
-    chain = load_qa_chain(llm, chain_type="stuff")
-
-    # Run QA chain
+    # Run the QA chain
     response = chain.run(input_documents=docs, question=question)
-
-    return response
+    return response.strip()
