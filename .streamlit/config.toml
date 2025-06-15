@@ -1,5 +1,11 @@
 [theme]
-base = "light"
+base="dark"
+backgroundColor="#000000"
+primaryColor="#00FFAA"
+secondaryBackgroundColor="#111111"
+textColor="#FFFFFF"
 
 [server]
 headless = true
+enableCORS = false
+port = 10000
