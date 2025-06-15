@@ -1,10 +1,9 @@
 import os
 from dotenv import load_dotenv
 from langchain_community.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.chains.question_answering import load_qa_chain
-from langchain.chat_models import ChatOpenAI
-
+from langchain_community.chat_models import ChatOpenAI
 load_dotenv()
 
 def answer_question(question):
