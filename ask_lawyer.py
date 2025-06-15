@@ -1,29 +1,28 @@
-from langchain_community.llms import Ollama
-from langchain.chains.question_answering import load_qa_chain
+import os
+from dotenv import load_dotenv
 from langchain_community.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.chains.question_answering import load_qa_chain
+from langchain.chat_models import ChatOpenAI
 
-# Initialize components once (best for performance)
-embeddings = HuggingFaceEmbeddings()
-db = Chroma(persist_directory="chroma_db", embedding_function=embeddings)
+load_dotenv()
 
-llm = Ollama(
-    model="phi3",
-    temperature=0.2,
-    num_predict=256,
-    stop=["\nUser:"],
-    streaming=False
-)
-
-chain = load_qa_chain(llm, chain_type="stuff")
-
-def answer_question(question: str) -> str:
-    # Search for top 4 relevant chunks
+def answer_question(question):
+    embeddings = HuggingFaceEmbeddings()
+    db = Chroma(persist_directory="chroma_db", embedding_function=embeddings)
     docs = db.similarity_search(question, k=4)
 
     if not docs:
-        return "❌ Sorry, I couldn't find anything relevant in the Dutch Co Agreement."
+        return "❌ No relevant documents found."
 
-    # Run the QA chain
+    llm = ChatOpenAI(
+        openai_api_base="https://api.groq.com/openai/v1",
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
+        model_name="llama3-8b-8192",  # ✅ Fast Groq model that works reliably
+        temperature=0.1,
+        max_tokens=1024,
+    )
+
+    chain = load_qa_chain(llm, chain_type="stuff")
     response = chain.run(input_documents=docs, question=question)
-    return response.strip()
+    return response
