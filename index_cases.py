@@ -1,41 +1,25 @@
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
 
-def process_and_index_documents(uploaded_files=None):
-    documents = []
+UPLOAD_FOLDER = "uploads"
+BASE_FOLDER = "base_documents"
+ALL_DOCS = []
 
-    if uploaded_files:
-        # Handle uploaded PDFs from UI
-        if not os.path.exists("uploads"):
-            os.makedirs("uploads")
+def load_documents_from(folder):
+    docs = []
+    for filename in os.listdir(folder):
+        if filename.endswith(".pdf"):
+            loader = PyPDFLoader(os.path.join(folder, filename))
+            docs.extend(loader.load())
+    return docs
 
-        for uploaded_file in uploaded_files:
-            file_path = os.path.join("uploads", uploaded_file.name)
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.read())
+ALL_DOCS.extend(load_documents_from(BASE_FOLDER))
+ALL_DOCS.extend(load_documents_from(UPLOAD_FOLDER))
 
-            loader = PyPDFLoader(file_path)
-            documents.extend(loader.load())
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+db = Chroma.from_documents(ALL_DOCS, embeddings, persist_directory="chroma_db")
+db.persist()
+print("✅ All documents indexed including base documents.")
 
-    else:
-        # Fallback to "dutch co agreement.pdf"
-        pdf_path = "uploads/dutch co agreement.pdf"
-        if not os.path.exists(pdf_path):
-            raise FileNotFoundError(f"❌ File not found: {pdf_path}")
-
-        loader = PyPDFLoader(pdf_path)
-        documents = loader.load()
-
-    # Split the documents
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-    docs = text_splitter.split_documents(documents)
-
-    # Create and persist vector DB
-    embeddings = HuggingFaceEmbeddings()
-    vectorstore = Chroma.from_documents(docs, embeddings, persist_directory="chroma_db")
-    vectorstore.persist()
-
-    return True

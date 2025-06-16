@@ -1,27 +1,29 @@
 import os
-from dotenv import load_dotenv
 from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain.chains.question_answering import load_qa_chain
-from langchain_community.chat_models import ChatOpenAI
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain.chains import RetrievalQA
+from langchain.chat_models import ChatOpenAI
+from dotenv import load_dotenv
+
 load_dotenv()
 
-def answer_question(question):
-    embeddings = HuggingFaceEmbeddings()
+def answer_question(query):
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     db = Chroma(persist_directory="chroma_db", embedding_function=embeddings)
-    docs = db.similarity_search(question, k=4)
-
-    if not docs:
-        return "❌ No relevant documents found."
+    retriever = db.as_retriever()
 
     llm = ChatOpenAI(
-        openai_api_base="https://api.groq.com/openai/v1",
+        model="llama3-8b-8192",
+        temperature=0,
         openai_api_key=os.getenv("OPENAI_API_KEY"),
-        model_name="llama3-8b-8192",  # ✅ Fast Groq model that works reliably
-        temperature=0.1,
-        max_tokens=1024,
+        openai_api_base=os.getenv("OPENAI_API_BASE")
     )
 
-    chain = load_qa_chain(llm, chain_type="stuff")
-    response = chain.run(input_documents=docs, question=question)
-    return response
+    qa_chain = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=retriever,
+        return_source_documents=False
+    )
+
+    return qa_chain.run(query)

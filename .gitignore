@@ -1,0 +1,8 @@
+# Ignore virtual environment
+venv/
+__pycache__/
+chroma_db/
+uploads/
+*.pyc
+.DS_Store
+*.env
